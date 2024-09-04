@@ -1,0 +1,15 @@
+services:
+  db:
+    image: 'mysql:8.0'
+    restart: always
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: mysql_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: sergei
+      MYSQL_PASSWORD: secret
+volumes:
+  mysql_data:
