@@ -5,6 +5,8 @@ import com.sergeineretin.cloudfilestorage.model.User;
 import com.sergeineretin.cloudfilestorage.repository.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,10 +16,14 @@ import java.util.Optional;
 public class RegistrationService {
     private final UserRepository repository;
     private final ModelMapper modelMapper;
+    private final PasswordEncoder passwordEncoder;
     @Autowired
-    public RegistrationService(ModelMapper modelMapper, UserRepository repository) {
+    public RegistrationService(ModelMapper modelMapper,
+                               UserRepository repository,
+                               PasswordEncoder passwordEncoder) {
         this.repository = repository;
         this.modelMapper = modelMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public Optional<UserDto> getUserByLogin(String login) {
@@ -27,6 +33,7 @@ public class RegistrationService {
 
     @Transactional
     public void register(UserDto userDto) {
+        userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
         User user = modelMapper.map(userDto, User.class);
         repository.save(user);
     }
