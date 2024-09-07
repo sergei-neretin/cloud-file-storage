@@ -3,6 +3,7 @@ package com.sergeineretin.cloudfilestorage.service;
 import com.sergeineretin.cloudfilestorage.dto.UserDto;
 import com.sergeineretin.cloudfilestorage.model.User;
 import com.sergeineretin.cloudfilestorage.repository.UserRepository;
+import com.sergeineretin.cloudfilestorage.util.Roles;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,8 +35,8 @@ public class RegistrationService {
     @Transactional
     public void register(UserDto userDto) {
         userDto.setPassword(passwordEncoder.encode(userDto.getPassword()));
+        userDto.setRole(Roles.ROLE_USER);
         User user = modelMapper.map(userDto, User.class);
         repository.save(user);
     }
-
 }
