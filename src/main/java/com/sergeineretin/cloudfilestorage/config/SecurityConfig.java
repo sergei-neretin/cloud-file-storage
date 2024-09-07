@@ -39,6 +39,9 @@ public class SecurityConfig {
                                 .failureUrl("/auth/login?error")
                                 .defaultSuccessUrl("/home", true)
                                 .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/auth/login"))
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
