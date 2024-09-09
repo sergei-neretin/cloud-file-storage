@@ -21,6 +21,10 @@ public class UserDetailsImpl implements UserDetails {
         return Collections.singletonList(new SimpleGrantedAuthority(user.getRole()));
     }
 
+    public long getId() {
+        return this.user.getId();
+    }
+
     @Override
     public String getPassword() {
         return this.user.getPassword();

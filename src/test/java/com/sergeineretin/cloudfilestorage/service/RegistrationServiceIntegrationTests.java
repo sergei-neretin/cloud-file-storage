@@ -61,7 +61,7 @@ public class RegistrationServiceIntegrationTests {
     @Test
     void testThatRegistrationServiceRegisterSavesNewToDatabase() {
         underTest.register(TestUtils.getUserDto());
-        Optional<User> byId = userRepository.findById(TestUtils.getUserDto().getEmail());
+        Optional<User> byId = userRepository.findByUsername(TestUtils.getUserDto().getEmail());
         assertTrue(byId.isPresent());
         assertEquals("john.doe@gmail.com", byId.get().getEmail());
     }
@@ -69,7 +69,7 @@ public class RegistrationServiceIntegrationTests {
     @Test
     void testThatRegistrationServiceRegisterSetsRoleUserToTheEntity() {
         underTest.register(TestUtils.getUserDto());
-        Optional<User> byId = userRepository.findById(TestUtils.getUserDto().getEmail());
+        Optional<User> byId = userRepository.findByUsername(TestUtils.getUserDto().getEmail());
         assertTrue(byId.isPresent());
         assertEquals(Roles.ROLE_USER, byId.get().getRole());
     }

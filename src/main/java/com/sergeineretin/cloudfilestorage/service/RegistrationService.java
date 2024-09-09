@@ -28,7 +28,7 @@ public class RegistrationService {
     }
 
     public Optional<UserDto> getUserByLogin(String login) {
-        Optional<User> model = repository.findById(login);
+        Optional<User> model = repository.findByUsername(login);
         return model.map(user -> modelMapper.map(user, UserDto.class));
     }
 
