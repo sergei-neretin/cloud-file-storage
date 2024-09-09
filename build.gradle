@@ -50,6 +50,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     implementation 'com.fasterxml.jackson.core:jackson-core:2.17.1'
     implementation 'org.modelmapper:modelmapper:3.1.1'
+    implementation 'io.minio:minio:8.5.12'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
