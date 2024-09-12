@@ -36,7 +36,7 @@ public class User implements Serializable {
     private String lastName;
 
     @Column(name = "password")
-    @Size(min = 8, max = 100, message = "Username length must be in between 2 and 50 symbols")
+    @Size(min = 8, max = 100, message = "Username length must be in between 8 and 50 symbols")
     private String password;
 
     @Column(name = "role")

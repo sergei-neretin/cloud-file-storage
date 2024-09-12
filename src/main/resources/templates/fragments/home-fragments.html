@@ -1,0 +1,28 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="homeFragment(files)">
+    <table>
+        <tr th:each="file : ${files}">
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title" th:if="${file.isDir()}">
+                        <a th:href="@{home(path=${file.getPath()})}">
+                            <span th:text="${file.getName()}">title</span>
+                        </a>
+                    </h5>
+                    <h5 class="card-title" th:unless="${file.isDir()}">
+                            <span th:text="${file.getName()}">title</span>
+                    </h5>
+                    <p th:unless="${file.isDir()}" class="card-text">Size: <span th:text="${file.getSize()}">size</span> B</p>
+                    <a href="#" class="btn btn-primary">Download</a>
+                </div>
+            </div>
+        </tr>
+    </table>
+
+</div>
+
+</body>
+</html>

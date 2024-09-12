@@ -1,8 +1,9 @@
 package com.sergeineretin.cloudfilestorage.service;
 
-import com.sergeineretin.cloudfilestorage.dto.UserObjectDto;
+import com.sergeineretin.cloudfilestorage.CustomFile;
 import com.sergeineretin.cloudfilestorage.exception.BrokenFileException;
 import io.minio.*;
+import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,8 @@ import javax.validation.constraints.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class MinioService {
@@ -98,6 +99,21 @@ public class MinioService {
         }
     }
 
+    public boolean isFolderExist(String path) {
+        try {
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(USER_FILES_BUCKET_NAME)
+                            .prefix(path)
+                            .maxKeys(1)
+                            .build()
+            );
+            return results.iterator().hasNext();
+        } catch (Exception e) {
+            log.error("An unexpected error occurred while checking if the folder '{}' exists", path, e);
+            return false;
+        }
+    }
     public void renameFile(String source, String dest) {
         try {
             minioClient.copyObject(
@@ -115,6 +131,32 @@ public class MinioService {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public List<CustomFile> getList(String path) {
+        if (!path.endsWith("/")) {
+            path = path + "/";
+        }
+        try {
+            Iterable<Result<Item>> iterable = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(USER_FILES_BUCKET_NAME)
+                            .prefix(path)
+                            .maxKeys(100)
+                            .build());
+            List<CustomFile> results = new ArrayList<>();
+            iterable.forEach(x -> {
+                try {
+                    results.add(new CustomFile(x.get()));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            log.info("List (size = {}) of files found for path: {}",results.size(), path);
+            return results;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
 
