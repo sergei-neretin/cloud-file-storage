@@ -36,6 +36,7 @@ public class HomeController {
             model.addAttribute("items", items);
             Map<String,String> hierarchy = StorageUtils.getNavigationHierarchy(path);
             model.addAttribute("hierarchy", hierarchy);
+            model.addAttribute("path", path);
             return "home";
         } else {
             model.addAttribute("message", "folder does not exist");
@@ -45,10 +46,10 @@ public class HomeController {
 
     @PostMapping("/home")
     public String submit(@RequestParam(value = "path", required = false) String path,
-                         @RequestParam("file") MultipartFile file) throws IOException {
+                         @RequestParam("file") MultipartFile file,  Model model) throws IOException {
         String fullPath = getFullPath(path);
         minioService.createFile(fullPath, file);
-        return "redirect:home";
+        return  "redirect:/home?path=" + path;
     }
 
     @GetMapping("/admin")
