@@ -59,11 +59,10 @@ public class HomeController {
         return "redirect:/home?path=" + path;
     }
 
-    @PostMapping("/home/delete") String deletePath(@RequestParam(value = "path", required = false) String path,
-                                                     String name,
+    @PostMapping("/home/delete") String deletePath(@RequestParam(value = "path") String path,
+                                                     @RequestParam(value = "objectPath") String objectPath,
                                                      Model model) {
-        String fullPath = getFullPath(path);
-        minioService.delete(fullPath + "/" + name);
+        minioService.delete(objectPath);
         model.addAttribute("path", path);
         return "redirect:/home?path=" + path;
     }
@@ -91,14 +90,13 @@ public class HomeController {
 
     private String getFullPath(String path) {
         long id = getUserDetails().getId();
-        String userRootFolder = "user-"+ id +"-files/";
-        if (path != null && path.startsWith(userRootFolder)) {
-            return path;
-        } else if (path != null) {
-            return userRootFolder + path;
-        } else {
+        String userRootFolder = "user-" + id + "-files/";
+
+        if (path == null || path.isBlank()) {
             return userRootFolder;
         }
+
+        return path.startsWith(userRootFolder) ? path : userRootFolder + path;
     }
 
     private UserDetailsImpl getUserDetails() {
