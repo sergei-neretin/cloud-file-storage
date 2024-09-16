@@ -30,7 +30,7 @@
     <div th:replace="fragments/home-fragments :: newFolderModal(path=${path})"></div>
 
 
-    <div th:replace="fragments/home-fragments :: homeFragment(${items})"></div>
+    <div th:replace="fragments/home-fragments :: homeFragment(${items}, ${path})"></div>
     <form th:action="@{/logout}" th:method="POST">
         <input type="submit" value="Logout">
     </form>

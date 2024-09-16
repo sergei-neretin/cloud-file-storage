@@ -1,7 +1,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
 
-<div th:fragment="homeFragment(files)">
+<div th:fragment="homeFragment(files, path)">
     <table>
         <tr th:each="file : ${files}">
 
@@ -16,7 +16,10 @@
                             <span th:text="${file.getName()}">title</span>
                     </h5>
                     <p th:unless="${file.isDir()}" class="card-text">Size: <span th:text="${file.getSize()}">size</span> B</p>
-                    <a href="#" class="btn btn-primary">Download</a>
+                    <form th:method="POST" th:action="@{/home/delete(path=${path})}">
+                        <input type="hidden" name="name" th:value="${file.getName()}" />
+                        <input type="submit" class="btn btn-outline-danger" value="Delete"/>
+                    </form>
                 </div>
             </div>
         </tr>

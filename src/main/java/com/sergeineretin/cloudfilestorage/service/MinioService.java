@@ -90,8 +90,14 @@ public class MinioService {
         }
     }
 
-    public void deleteFile(String path) {
+    public void delete(String path) {
         try {
+            if (path.endsWith("/")) {
+                List<CustomFile> list = getList(path);
+                for (CustomFile file : list) {
+                   delete(file.getPath());
+                }
+            }
             minioClient.removeObject(
                     RemoveObjectArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
@@ -129,7 +135,7 @@ public class MinioService {
                                             .object(source)
                                             .build())
                             .build());
-            deleteFile(source);
+            delete(source);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

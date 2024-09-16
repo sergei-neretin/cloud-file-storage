@@ -10,10 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -58,6 +55,15 @@ public class HomeController {
                             Model model) {
         String fullPath = getFullPath(path);
         minioService.createFolder(fullPath, name);
+        model.addAttribute("path", path);
+        return "redirect:/home?path=" + path;
+    }
+
+    @PostMapping("/home/delete") String deletePath(@RequestParam(value = "path", required = false) String path,
+                                                     String name,
+                                                     Model model) {
+        String fullPath = getFullPath(path);
+        minioService.delete(fullPath + "/" + name);
         model.addAttribute("path", path);
         return "redirect:/home?path=" + path;
     }
