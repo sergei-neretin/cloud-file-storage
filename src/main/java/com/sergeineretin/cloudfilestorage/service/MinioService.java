@@ -63,7 +63,7 @@ public class MinioService {
         }
     }
 
-    private InputStream getInputStream(MultipartFile multipartFile) throws IOException {
+    private InputStream getInputStream(MultipartFile multipartFile) {
         try {
             return multipartFile.getInputStream();
         } catch (IOException e) {
@@ -71,15 +71,18 @@ public class MinioService {
         }
     }
 
-    public void createFolder(String path) throws IOException {
+    public void createFolder(String path, String folderName) {
         try {
             if (!path.endsWith("/")) {
                 path = path + "/";
             }
+            if (!folderName.endsWith("/")) {
+                folderName = folderName + "/";
+            }
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
-                            .object(path)
+                            .object(path + folderName)
                             .stream(new ByteArrayInputStream(new byte[] {}), 0, -1)
                             .build());
         } catch (Exception e) {
@@ -145,9 +148,13 @@ public class MinioService {
                             .maxKeys(100)
                             .build());
             List<CustomFile> results = new ArrayList<>();
+            String finalPath = path;
             iterable.forEach(x -> {
                 try {
-                    results.add(new CustomFile(x.get()));
+                    Item item = x.get();
+                    if (!item.objectName().equals(finalPath)) {
+                        results.add(new CustomFile(item));
+                    }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

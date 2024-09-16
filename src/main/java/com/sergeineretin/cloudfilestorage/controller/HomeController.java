@@ -44,12 +44,22 @@ public class HomeController {
         }
     }
 
-    @PostMapping("/home")
+    @PostMapping("/home/new-file")
     public String submit(@RequestParam(value = "path", required = false) String path,
                          @RequestParam("file") MultipartFile file,  Model model) throws IOException {
         String fullPath = getFullPath(path);
         minioService.createFile(fullPath, file);
         return  "redirect:/home?path=" + path;
+    }
+
+    @PostMapping("/home/new-folder")
+    public String newFolder(@RequestParam(value = "path", required = false) String path,
+                            @RequestParam(value = "name") String name,
+                            Model model) {
+        String fullPath = getFullPath(path);
+        minioService.createFolder(fullPath, name);
+        model.addAttribute("path", path);
+        return "redirect:/home?path=" + path;
     }
 
     @GetMapping("/admin")

@@ -14,18 +14,22 @@
             </li>
         </ol>
     </nav>
-    <form th:method="POST" th:action="@{/home}" enctype="multipart/form-data">
-        <input type="hidden" name="path" th:value="${path}" />
-        <table>
-            <tr>
-                <td><label>Select a file to upload</label></td>
-                <td><input type="file" name="file" /></td>
-            </tr>
-            <tr>
-                <td><input type="submit" value="Submit" /></td>
-            </tr>
-        </table>
-    </form>
+
+
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFileModal">
+        New file
+    </button>
+
+    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
+        New folder
+    </button>
+
+    <div th:replace="fragments/home-fragments :: newFileModal(path=${path})"></div>
+
+
+    <div th:replace="fragments/home-fragments :: newFolderModal(path=${path})"></div>
+
+
     <div th:replace="fragments/home-fragments :: homeFragment(${items})"></div>
     <form th:action="@{/logout}" th:method="POST">
         <input type="submit" value="Logout">

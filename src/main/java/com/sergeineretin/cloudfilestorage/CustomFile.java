@@ -21,11 +21,12 @@ public class CustomFile {
         List<String> list = Arrays.stream(fullPath.split("/")).toList();
         if (fullPath.endsWith("/")) {
             name = list.get(list.size() - 1) + "/";
+            isDir = true;
         } else {
             name = list.get(list.size() - 1);
+            isDir = false;
         }
         path = item.objectName();
         size = item.size();
-        isDir = item.isDir();
     }
 }
