@@ -14,22 +14,16 @@
             </li>
         </ol>
     </nav>
-
-
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFileModal">
-        New file
-    </button>
-
-    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
-        New folder
-    </button>
-
+    <div class="btn-group" role="group" aria-label="Basic example">
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFileModal">
+            New file
+        </button>
+        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
+            New folder
+        </button>
+    </div>
     <div th:replace="fragments/home-fragments :: newFileModal(path=${path})"></div>
-
-
     <div th:replace="fragments/home-fragments :: newFolderModal(path=${path})"></div>
-
-
     <div th:replace="fragments/home-fragments :: homeFragment(${items}, ${path})"></div>
     <form th:action="@{/logout}" th:method="POST">
         <input type="submit" value="Logout">

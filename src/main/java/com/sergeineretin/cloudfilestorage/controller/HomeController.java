@@ -68,6 +68,16 @@ public class HomeController {
         return "redirect:/home?path=" + path;
     }
 
+    @PostMapping("/home/rename") String rename(@RequestParam(value = "path", required = false) String path,
+                                               @RequestParam(value = "name") String name,
+                                               @RequestParam(value = "newName") String newName,
+                                                   Model model) {
+        String fullPath = getFullPath(path);
+        minioService.rename(fullPath + name, fullPath + newName);
+        model.addAttribute("path", path);
+        return "redirect:/home?path=" + path;
+    }
+
     @GetMapping("/admin")
     public String adminPage() {
         return "admin";

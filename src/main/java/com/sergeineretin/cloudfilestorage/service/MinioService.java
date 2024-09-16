@@ -123,23 +123,34 @@ public class MinioService {
             return false;
         }
     }
-    public void renameFile(String source, String dest) {
+    public void rename(String fullName, String newFullName) {
         try {
+           if (fullName.endsWith("/")) {
+               List<CustomFile> list = getList(fullName);
+               for (CustomFile file : list) {
+                   String newPath = replaceFirstPart(file.getPath(), fullName, newFullName);
+                   rename(file.getPath(), newPath);
+               }
+           }
             minioClient.copyObject(
                     CopyObjectArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
-                            .object(dest)
+                            .object(newFullName)
                             .source(
                                     CopySource.builder()
                                             .bucket(USER_FILES_BUCKET_NAME)
-                                            .object(source)
+                                            .object(fullName)
                                             .build())
                             .build());
-            delete(source);
+            delete(fullName);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public String replaceFirstPart(String originalPath, String oldPart, String newPart) {
+        return originalPath.replaceFirst(oldPart, newPart);
     }
 
     public List<CustomFile> getList(String path) {
