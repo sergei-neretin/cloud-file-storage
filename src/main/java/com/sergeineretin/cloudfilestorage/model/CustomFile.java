@@ -1,8 +1,9 @@
-package com.sergeineretin.cloudfilestorage;
+package com.sergeineretin.cloudfilestorage.model;
 
 import io.minio.messages.Item;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +27,12 @@ public class CustomFile {
             name = list.get(list.size() - 1);
             isDir = false;
         }
-        path = item.objectName();
+        String pathWithUserFolder = item.objectName();
+        List<String> list1 = new ArrayList<>(Arrays.stream(pathWithUserFolder.split("/")).toList());
+        list1.remove(0);
+
+        path = isDir ? String.join("/", list1) : String.join("/", list1) + "/";
+
         size = item.size();
     }
 }

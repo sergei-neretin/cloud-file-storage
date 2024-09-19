@@ -1,38 +1,29 @@
 package com.sergeineretin.cloudfilestorage.controller;
 
-import com.sergeineretin.cloudfilestorage.CustomFile;
 import com.sergeineretin.cloudfilestorage.exception.StorageException;
-import com.sergeineretin.cloudfilestorage.security.UserDetailsImpl;
-import com.sergeineretin.cloudfilestorage.service.MinioService;
+import com.sergeineretin.cloudfilestorage.service.HomeService;
 import com.sergeineretin.cloudfilestorage.util.StorageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.*;
 
 @Controller
 public class HomeController {
-    private final MinioService minioService;
-
+    private final HomeService homeService;
 
     @Autowired
-    public HomeController(MinioService minioService) {
-        this.minioService = minioService;
+    public HomeController(HomeService homeService) {
+        this.homeService = homeService;
     }
     @GetMapping("/home")
     public String homePage(@RequestParam(value = "path", required = false) String path, Model model) {
-        String fullPath = getFullPath(path);
-        if (minioService.isFolderExist(fullPath)) {
-            List<CustomFile> items = minioService.getList(fullPath);
-            model.addAttribute("items", items);
-            Map<String,String> hierarchy = StorageUtils.getNavigationHierarchy(path);
-            model.addAttribute("hierarchy", hierarchy);
+        String fullPath = StorageUtils.getFullDirectoryPath(path);
+        if (homeService.isFolderExist(fullPath)) {
+            model.addAttribute("items", homeService.getList(fullPath));
+            model.addAttribute("hierarchy",  StorageUtils.getNavigationHierarchy(path));
             model.addAttribute("path", path);
             return "home";
         } else {
@@ -43,38 +34,30 @@ public class HomeController {
 
     @PostMapping("/home/new-file")
     public String submit(@RequestParam(value = "path", required = false) String path,
-                         @RequestParam("file") MultipartFile file,  Model model) throws IOException {
-        String fullPath = getFullPath(path);
-        minioService.createFile(fullPath, file);
-        return  "redirect:/home?path=" + path;
+                         @RequestParam("file") MultipartFile file) {
+        homeService.createFile(StorageUtils.getFullDirectoryPath(path), file);
+        return  redirectToHomePage(path);
     }
 
     @PostMapping("/home/new-folder")
     public String newFolder(@RequestParam(value = "path", required = false) String path,
-                            @RequestParam(value = "name") String name,
-                            Model model) {
-        String fullPath = getFullPath(path);
-        minioService.createFolder(fullPath, name);
-        model.addAttribute("path", path);
-        return "redirect:/home?path=" + path;
+                            @RequestParam(value = "name") String name) {
+        homeService.createFolder(StorageUtils.getFullDirectoryPath(path), name);
+        return redirectToHomePage(path);
     }
 
     @PostMapping("/home/delete") String deletePath(@RequestParam(value = "path") String path,
-                                                     @RequestParam(value = "objectPath") String objectPath,
-                                                     Model model) {
-        minioService.delete(objectPath);
-        model.addAttribute("path", path);
-        return "redirect:/home?path=" + path;
+                                                     @RequestParam(value = "objectName") String name) {
+        homeService.delete( StorageUtils.getFullDirectoryPath(path) + name);
+        return redirectToHomePage(path);
     }
 
     @PostMapping("/home/rename") String rename(@RequestParam(value = "path", required = false) String path,
                                                @RequestParam(value = "name") String name,
-                                               @RequestParam(value = "newName") String newName,
-                                                   Model model) {
-        String fullPath = getFullPath(path);
-        minioService.rename(fullPath + name, fullPath + newName);
-        model.addAttribute("path", path);
-        return "redirect:/home?path=" + path;
+                                               @RequestParam(value = "newName") String newName) {
+        homeService.rename( StorageUtils.getFullDirectoryPath(path) + name,
+                StorageUtils.getFullDirectoryPath(path) + newName);
+        return redirectToHomePage(path);
     }
 
     @GetMapping("/admin")
@@ -88,19 +71,8 @@ public class HomeController {
         return "error";
     }
 
-    private String getFullPath(String path) {
-        long id = getUserDetails().getId();
-        String userRootFolder = "user-" + id + "-files/";
-
-        if (path == null || path.isBlank()) {
-            return userRootFolder;
-        }
-
-        return path.startsWith(userRootFolder) ? path : userRootFolder + path;
+    private String redirectToHomePage(String path) {
+        return "redirect:/home?path=" + (path != null ? path : "");
     }
 
-    private UserDetailsImpl getUserDetails() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return (UserDetailsImpl) authentication.getPrincipal();
-    }
 }

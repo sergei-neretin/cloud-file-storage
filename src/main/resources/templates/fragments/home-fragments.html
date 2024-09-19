@@ -15,7 +15,7 @@
                     </h5>
                     <p th:unless="${file.isDir()}" class="card-text">Size: <span th:text="${file.getSize()}">size</span> B</p>
                     <form th:method="POST" th:action="@{/home/delete(path=${path})}">
-                        <input type="hidden" name="objectPath" th:value="${file.getPath()}" />
+                        <input type="hidden" name="objectName" th:value="${file.getName()}" />
                         <input type="submit" class="btn btn-outline-danger" value="Delete"/>
                     </form>
                     <button type="button" class="btn btn-secondary"

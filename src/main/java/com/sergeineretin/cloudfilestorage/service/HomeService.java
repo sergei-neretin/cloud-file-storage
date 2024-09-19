@@ -1,6 +1,6 @@
 package com.sergeineretin.cloudfilestorage.service;
 
-import com.sergeineretin.cloudfilestorage.CustomFile;
+import com.sergeineretin.cloudfilestorage.model.CustomFile;
 import com.sergeineretin.cloudfilestorage.exception.BrokenFileException;
 import io.minio.*;
 import io.minio.messages.Item;
@@ -18,11 +18,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
-public class MinioService {
-    private final String USER_FILES_BUCKET_NAME="user-files";
+import static com.sergeineretin.cloudfilestorage.util.StorageUtils.USER_FILES_BUCKET_NAME;
 
-    private static final Logger log = LoggerFactory.getLogger(MinioService.class);
+@Service
+public class HomeService {
+
+    private static final Logger log = LoggerFactory.getLogger(HomeService.class);
     MinioClient minioClient;
 
     @PostConstruct
@@ -40,16 +41,16 @@ public class MinioService {
                                 .build());
             }
         } catch (Exception e) {
-
+            log.error(e.getMessage());
         }
     }
 
     @Autowired
-    public MinioService(MinioClient minioClient) {
+    public HomeService(MinioClient minioClient) {
         this.minioClient = minioClient;
     }
 
-    public void createFile(String path, @NotNull MultipartFile multipartFile) throws IOException {
+    public void createFile(String path, @NotNull MultipartFile multipartFile) {
         InputStream inputStream = getInputStream(multipartFile);
         try {
             minioClient.putObject(PutObjectArgs.builder()
@@ -93,9 +94,19 @@ public class MinioService {
     public void delete(String path) {
         try {
             if (path.endsWith("/")) {
-                List<CustomFile> list = getList(path);
-                for (CustomFile file : list) {
-                   delete(file.getPath());
+                Iterable<Result<Item>> iterable = minioClient.listObjects(
+                        ListObjectsArgs.builder()
+                                .bucket(USER_FILES_BUCKET_NAME)
+                                .prefix(path)
+                                .recursive(true)
+                                .build());
+                for (Result<Item> file : iterable) {
+                    minioClient.removeObject(
+                            RemoveObjectArgs.builder()
+                                    .bucket(USER_FILES_BUCKET_NAME)
+                                    .object(file.get().objectName())
+                                    .build());
+                    System.out.println(file.get().objectName());
                 }
             }
             minioClient.removeObject(
@@ -108,28 +119,42 @@ public class MinioService {
         }
     }
 
-    public boolean isFolderExist(String path) {
+    public boolean isFolderExist(String objectName) {
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
-                            .prefix(path)
+                            .prefix(objectName)
                             .maxKeys(1)
                             .build()
             );
             return results.iterator().hasNext();
         } catch (Exception e) {
-            log.error("An unexpected error occurred while checking if the folder '{}' exists", path, e);
+            log.error("An unexpected error occurred while checking if the folder '{}' exists", objectName, e);
             return false;
         }
     }
     public void rename(String fullName, String newFullName) {
         try {
            if (fullName.endsWith("/")) {
-               List<CustomFile> list = getList(fullName);
-               for (CustomFile file : list) {
-                   String newPath = replaceFirstPart(file.getPath(), fullName, newFullName);
-                   rename(file.getPath(), newPath);
+               Iterable<Result<Item>> iterable = minioClient.listObjects(
+                       ListObjectsArgs.builder()
+                               .bucket(USER_FILES_BUCKET_NAME)
+                               .prefix(fullName)
+                               .recursive(true)
+                               .build());
+               for (Result<Item> result : iterable) {
+                   String newObjectName = result.get().objectName().replaceFirst(fullName, newFullName);
+                   minioClient.copyObject(
+                           CopyObjectArgs.builder()
+                                   .bucket(USER_FILES_BUCKET_NAME)
+                                   .object(newObjectName)
+                                   .source(
+                                           CopySource.builder()
+                                                   .bucket(USER_FILES_BUCKET_NAME)
+                                                   .object(result.get().objectName())
+                                                   .build())
+                                   .build());
                }
            }
             minioClient.copyObject(
@@ -146,11 +171,6 @@ public class MinioService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-    }
-
-    public String replaceFirstPart(String originalPath, String oldPart, String newPart) {
-        return originalPath.replaceFirst(oldPart, newPart);
     }
 
     public List<CustomFile> getList(String path) {
@@ -162,7 +182,6 @@ public class MinioService {
                     ListObjectsArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
                             .prefix(path)
-                            .maxKeys(100)
                             .build());
             List<CustomFile> results = new ArrayList<>();
             String finalPath = path;

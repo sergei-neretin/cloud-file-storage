@@ -1,12 +1,26 @@
 package com.sergeineretin.cloudfilestorage.util;
 
+import com.sergeineretin.cloudfilestorage.security.UserDetailsImpl;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.util.*;
 
 public class StorageUtils {
     private StorageUtils() {}
 
-    public static String getRootFolderByUsername(String username) {
-        return "user-" + username + "files";
+    public final static String USER_FILES_BUCKET_NAME="user-files";
+
+    public static String getFullDirectoryPath(String path) {
+        long id = ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
+        String userRootFolder = "user-" + id + "-files/";
+
+        if (path == null || path.isBlank()) {
+            return userRootFolder;
+        } else if (!path.endsWith("/")) {
+            return userRootFolder + path + "/";
+        } else {
+            return userRootFolder + path;
+        }
     }
 
     public static Map<String, String> getNavigationHierarchy(String path) {
@@ -19,7 +33,7 @@ public class StorageUtils {
             }
 
             Map<String, String> hierarchy = new LinkedHashMap<>();
-            for (int i = 1; i < subFolders.size(); i++) {
+            for (int i = 0; i < subFolders.size(); i++) {
                 hierarchy.put(folders.get(i), subFolders.get(i));
             }
 
