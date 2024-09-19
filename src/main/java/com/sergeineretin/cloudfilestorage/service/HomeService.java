@@ -1,7 +1,7 @@
 package com.sergeineretin.cloudfilestorage.service;
 
+import com.sergeineretin.cloudfilestorage.exception.*;
 import com.sergeineretin.cloudfilestorage.model.CustomFile;
-import com.sergeineretin.cloudfilestorage.exception.BrokenFileException;
 import io.minio.*;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
@@ -34,14 +34,15 @@ public class HomeService {
                             .bucket(USER_FILES_BUCKET_NAME)
                             .build());
             if (!exist) {
-                log.info("Creating user files bucket with name: " + USER_FILES_BUCKET_NAME);
                 minioClient.makeBucket(
                         MakeBucketArgs.builder()
                                 .bucket(USER_FILES_BUCKET_NAME)
                                 .build());
+                log.info("Creating user files bucket with name: " + USER_FILES_BUCKET_NAME);
             }
         } catch (Exception e) {
             log.error(e.getMessage());
+            throw new StorageException("Error creating user files bucket", e);
         }
     }
 
@@ -51,16 +52,20 @@ public class HomeService {
     }
 
     public void createFile(String path, @NotNull MultipartFile multipartFile) {
-        InputStream inputStream = getInputStream(multipartFile);
-        try {
+        try (InputStream inputStream = getInputStream(multipartFile)) {
+            checkIfPathExists(path);
+            if (isObjectExist(path + multipartFile.getOriginalFilename())) {
+                throw new FileAlreadyExistsException("Object '" + path + multipartFile.getOriginalFilename() + "' already exists");
+            }
             minioClient.putObject(PutObjectArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
                             .object(path + multipartFile.getOriginalFilename())
                             .stream(inputStream, -1, 10485760)
                             .contentType(multipartFile.getContentType())
                     .build());
+            log.info("File '{}' uploaded successfully", multipartFile.getOriginalFilename());
         } catch (Exception e) {
-            throw new RuntimeException(e); // TO DO
+            throw new StorageException("Failed to store file '" + multipartFile.getOriginalFilename() + "'", e);
         }
     }
 
@@ -68,18 +73,16 @@ public class HomeService {
         try {
             return multipartFile.getInputStream();
         } catch (IOException e) {
+            log.error("Failed to open file '{}'", multipartFile.getOriginalFilename(), e);
             throw new BrokenFileException("The file is corrupted and cannot be downloaded");
         }
     }
 
     public void createFolder(String path, String folderName) {
         try {
-            if (!path.endsWith("/")) {
-                path = path + "/";
-            }
-            if (!folderName.endsWith("/")) {
-                folderName = folderName + "/";
-            }
+            path = ensureTrailingSlash(path);
+            checkIfPathExists(path);
+            folderName = ensureTrailingSlash(folderName);
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(USER_FILES_BUCKET_NAME)
@@ -87,12 +90,14 @@ public class HomeService {
                             .stream(new ByteArrayInputStream(new byte[] {}), 0, -1)
                             .build());
         } catch (Exception e) {
-            throw new RuntimeException(e); // TO DO
+            log.error("Error creating folder '{}'", folderName, e);
+            throw new StorageException("Failed to store folder '" + folderName + "'", e);
         }
     }
 
     public void delete(String path) {
         try {
+            checkIfPathExists(path);
             if (path.endsWith("/")) {
                 Iterable<Result<Item>> iterable = minioClient.listObjects(
                         ListObjectsArgs.builder()
@@ -101,25 +106,104 @@ public class HomeService {
                                 .recursive(true)
                                 .build());
                 for (Result<Item> file : iterable) {
-                    minioClient.removeObject(
-                            RemoveObjectArgs.builder()
-                                    .bucket(USER_FILES_BUCKET_NAME)
-                                    .object(file.get().objectName())
-                                    .build());
-                    System.out.println(file.get().objectName());
+                    removeObject(file.get().objectName());
                 }
             }
-            minioClient.removeObject(
-                    RemoveObjectArgs.builder()
-                            .bucket(USER_FILES_BUCKET_NAME)
-                            .object(path)
-                            .build());
+            removeObject(path);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Failed to delete folder '{}'", path, e);
+            throw new StorageException("Failed to delete file '" + path + "'", e);
         }
     }
 
-    public boolean isFolderExist(String objectName) {
+    private void removeObject(String path) throws Exception {
+        minioClient.removeObject(
+                RemoveObjectArgs.builder()
+                        .bucket(USER_FILES_BUCKET_NAME)
+                        .object(path)
+                        .build());
+        log.info("Deleted: {}", path);
+    }
+
+    public void rename(String fullName, String newFullName) {
+        try {
+            checkIfPathExists(fullName);
+            if (isObjectExist(newFullName)) {
+                throw new FileAlreadyExistsException("Rename failed: Object '" + newFullName + "' already exists");
+            }
+            if (fullName.endsWith("/")) {
+               Iterable<Result<Item>> iterable = minioClient.listObjects(
+                       ListObjectsArgs.builder()
+                               .bucket(USER_FILES_BUCKET_NAME)
+                               .prefix(fullName)
+                               .recursive(true)
+                               .build());
+               for (Result<Item> result : iterable) {
+                   String newObjectName = result.get().objectName().replaceFirst(fullName, newFullName);
+                   copyObject(result.get().objectName(), newObjectName);
+               }
+            } else {
+                copyObject(fullName, newFullName);
+            }
+            delete(fullName);
+        } catch (PathNotFoundException | FileAlreadyExistsException e) {
+            log.info("Error renaming: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error renaming object '{}' to '{}'", fullName, newFullName, e);
+            throw new StorageException("Failed to rename '" + fullName + "' to '" + newFullName + "'", e);
+        }
+    }
+
+    private void copyObject(String objectName, String newObjectName) throws Exception {
+        minioClient.copyObject(
+                CopyObjectArgs.builder()
+                        .bucket(USER_FILES_BUCKET_NAME)
+                        .object(newObjectName)
+                        .source(
+                                CopySource.builder()
+                                        .bucket(USER_FILES_BUCKET_NAME)
+                                        .object(objectName)
+                                        .build())
+                        .build());
+        log.info("Renamed: {} -> {}",  objectName, newObjectName);
+    }
+
+    public List<CustomFile> getList(String path) {
+        try {
+            path = ensureTrailingSlash(path);
+            checkIfPathExists(path);
+            Iterable<Result<Item>> iterable = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(USER_FILES_BUCKET_NAME)
+                            .prefix(path)
+                            .build());
+            List<CustomFile> results = new ArrayList<>();
+            for (Result<Item> result : iterable) {
+                Item item = result.get();
+                if (!item.objectName().equals(path)) {
+                    results.add(new CustomFile(item));
+                }
+            }
+            log.info("List (size = {}) of files found for path: {}",results.size(), path);
+            return results;
+        } catch (Exception e) {
+            log.error("Error getting list", e);
+            throw new StorageException("Failed to list files '" + path + "'", e);
+        }
+    }
+
+    private String ensureTrailingSlash(String path) {
+        return path.endsWith("/") ? path : path + "/";
+    }
+
+    private void checkIfPathExists(String path) {
+        if (!isObjectExist(path)) {
+            throw new PathNotFoundException("The specified path '" + path + "' does not exist.");
+        }
+    }
+
+    public boolean isObjectExist(String objectName) {
         try {
             Iterable<Result<Item>> results = minioClient.listObjects(
                     ListObjectsArgs.builder()
@@ -130,76 +214,8 @@ public class HomeService {
             );
             return results.iterator().hasNext();
         } catch (Exception e) {
-            log.error("An unexpected error occurred while checking if the folder '{}' exists", objectName, e);
-            return false;
-        }
-    }
-    public void rename(String fullName, String newFullName) {
-        try {
-           if (fullName.endsWith("/")) {
-               Iterable<Result<Item>> iterable = minioClient.listObjects(
-                       ListObjectsArgs.builder()
-                               .bucket(USER_FILES_BUCKET_NAME)
-                               .prefix(fullName)
-                               .recursive(true)
-                               .build());
-               for (Result<Item> result : iterable) {
-                   String newObjectName = result.get().objectName().replaceFirst(fullName, newFullName);
-                   minioClient.copyObject(
-                           CopyObjectArgs.builder()
-                                   .bucket(USER_FILES_BUCKET_NAME)
-                                   .object(newObjectName)
-                                   .source(
-                                           CopySource.builder()
-                                                   .bucket(USER_FILES_BUCKET_NAME)
-                                                   .object(result.get().objectName())
-                                                   .build())
-                                   .build());
-               }
-           }
-            minioClient.copyObject(
-                    CopyObjectArgs.builder()
-                            .bucket(USER_FILES_BUCKET_NAME)
-                            .object(newFullName)
-                            .source(
-                                    CopySource.builder()
-                                            .bucket(USER_FILES_BUCKET_NAME)
-                                            .object(fullName)
-                                            .build())
-                            .build());
-            delete(fullName);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public List<CustomFile> getList(String path) {
-        if (!path.endsWith("/")) {
-            path = path + "/";
-        }
-        try {
-            Iterable<Result<Item>> iterable = minioClient.listObjects(
-                    ListObjectsArgs.builder()
-                            .bucket(USER_FILES_BUCKET_NAME)
-                            .prefix(path)
-                            .build());
-            List<CustomFile> results = new ArrayList<>();
-            String finalPath = path;
-            iterable.forEach(x -> {
-                try {
-                    Item item = x.get();
-                    if (!item.objectName().equals(finalPath)) {
-                        results.add(new CustomFile(item));
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            log.info("List (size = {}) of files found for path: {}",results.size(), path);
-            return results;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("An error occurred while checking if the object '{}' exists", objectName, e);
+            throw new StorageException("Failed to check if the object '" + objectName + "' exists", e);
         }
     }
 }
-

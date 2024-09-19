@@ -21,7 +21,7 @@ public class HomeController {
     @GetMapping("/home")
     public String homePage(@RequestParam(value = "path", required = false) String path, Model model) {
         String fullPath = StorageUtils.getFullDirectoryPath(path);
-        if (homeService.isFolderExist(fullPath)) {
+        if (homeService.isObjectExist(fullPath)) {
             model.addAttribute("items", homeService.getList(fullPath));
             model.addAttribute("hierarchy",  StorageUtils.getNavigationHierarchy(path));
             model.addAttribute("path", path);
