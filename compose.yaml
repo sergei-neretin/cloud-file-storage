@@ -26,6 +26,15 @@ services:
     restart: always
     depends_on:
       - db
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server
+    volumes:
+      - ~/data/redis:/var/lib/redis
+      - ~/data/redis/config:/usr/local/etc/redis/redis.conf
 volumes:
   mysql_data:
   minio_data:
