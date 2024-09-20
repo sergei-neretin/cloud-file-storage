@@ -1,6 +1,7 @@
 package com.sergeineretin.cloudfilestorage.util;
 
 import com.sergeineretin.cloudfilestorage.security.UserDetailsImpl;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
@@ -21,6 +22,12 @@ public class StorageUtils {
         } else {
             return userRootFolder + path;
         }
+    }
+
+    public static String getUserRootFolder() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        long id = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+        return  "user-" + id + "-files/";
     }
 
     public static Map<String, String> getNavigationHierarchy(String path) {

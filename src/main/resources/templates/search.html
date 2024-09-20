@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="fragments/commons :: common-structure(~{::div.home-body})">
+<div class="home-body">
+    <h1>SEARCH PAGE</h1>
+    <tr th:each="file : ${files}">
+        <div class="card">
+            <div class="card-header">
+                <span th:text="${file.getName()}"> name</span>
+            </div>
+            <div class="card-body">
+                <a th:href="@{home(path=${file.getContainingDirectoryPath()})}">
+                    <span th:unless="${file.getContainingDirectoryPath().isEmpty()}" th:text="${file.getContainingDirectoryPath()}">path</span>
+                    <span th:if="${file.getContainingDirectoryPath().isEmpty()}">Home</span>
+                </a>
+            </div>
+        </div>
+    </tr>
+    <form th:action="@{/logout}" th:method="POST">
+        <input type="submit" value="Logout">
+    </form>
+</div>
+</html>

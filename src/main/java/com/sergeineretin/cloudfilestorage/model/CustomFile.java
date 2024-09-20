@@ -17,6 +17,7 @@ public class CustomFile {
     private String path;
     private long size;
     private boolean isDir;
+    private String containingDirectoryPath;
     public CustomFile(Item item) {
         String fullPath = item.objectName();
         List<String> list = Arrays.stream(fullPath.split("/")).toList();
@@ -32,6 +33,13 @@ public class CustomFile {
         list1.remove(0);
 
         path = isDir ? String.join("/", list1) : String.join("/", list1) + "/";
+
+        if (list1.size() > 1) {
+            list1.remove(list1.size() - 1);
+            containingDirectoryPath = String.join("/", list1);
+        } else {
+            containingDirectoryPath = "";
+        }
 
         size = item.size();
     }
