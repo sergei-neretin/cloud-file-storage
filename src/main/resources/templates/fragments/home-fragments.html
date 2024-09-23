@@ -1,53 +1,74 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div th:fragment="homeFragment(files, path)">
-    <table>
-        <tr th:each="file : ${files}">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title" th:if="${file.isDir()}">
-                        <a th:href="@{home(path=${file.getPath()})}">
-                            <span th:text="${file.getName()}">title</span>
+<div th:fragment="homeFragment(files, path)" class="full-height">
+    <div class="row">
+        <div class="col-md-4" th:each="file : ${files}">
+            <div class="card mb-3">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <h5 class="card-title d-flex align-items-center">
+                        <span th:if="${file.isDir()}" class="me-2">
+                            <i class="bi bi-folder"></i>
+                        </span>
+                        <span th:if="${!file.isDir()}" class="me-2">
+                            <i class="bi bi-file-earmark"></i>
+                        </span>
+                        <a th:if="${file.isDir()}" th:href="@{home(path=${file.getPath()})}">
+                            <span th:text="${file.getName()}">Directory Title</span>
                         </a>
+                        <span th:unless="${file.isDir()}" th:text="${file.getName()}">File Title</span>
                     </h5>
-                    <h5 class="card-title" th:unless="${file.isDir()}">
-                            <span th:text="${file.getName()}">title</span>
-                    </h5>
-                    <p th:unless="${file.isDir()}" class="card-text">Size: <span th:text="${file.getSize()}">size</span> B</p>
-                    <form th:method="POST" th:action="@{/home/delete(path=${path})}">
-                        <input type="hidden" name="objectName" th:value="${file.getName()}" />
-                        <input type="submit" class="btn btn-outline-danger" value="Delete"/>
-                    </form>
-                    <button type="button" class="btn btn-secondary"
-                            th:attr="data-bs-target='#renameModal-' + ${file.getName().replace(' ', '-')}"
-                            data-bs-toggle="modal">
-                        Rename
-                    </button>
-                    <div class="modal fade" th:id="'renameModal-' + ${file.getName().replace(' ', '-')}" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="renameModalLabel">Rename File</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="dropdown">
+                        <button class="btn btn-link p-0" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <li>
+                                <form th:method="POST" th:action="@{/home/delete(path=${path})}" class="dropdown-item">
+                                    <input type="hidden" name="objectName" th:value="${file.getName()}" />
+                                    <button type="submit" class="btn btn-link p-0 text-danger">
+                                        <i class="bi bi-trash me-2"></i> Delete
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item"
+                                        th:attr="data-bs-target='#renameModal-' + ${file.getName().replace(' ', '-')}"
+                                        data-bs-toggle="modal">
+                                    <i class="bi bi-pencil me-2"></i> Rename
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <p th:unless="${file.isDir()}" class="card-text text-muted">
+                    Size: <span th:text="${file.getSize()}">size</span> B
+                </p>
+            </div>
+
+            <div class="modal fade" th:id="'renameModal-' + ${file.getName().replace(' ', '-')}" tabindex="-1" aria-labelledby="renameModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="renameModalLabel">Rename File</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form th:action="@{/home/rename(path=${path})}" method="post">
+                                <input type="hidden" name="name" th:value="${file.getName()}"/>
+                                <div class="mb-3">
+                                    <label for="newName" class="form-label">New Name</label>
+                                    <input type="text" class="form-control" id="newName" name="newName" th:value="${file.getName()}"/>
                                 </div>
-                                <div class="modal-body">
-                                    <form th:action="@{/home/rename(path=${path})}" method="post">
-                                        <input type="hidden" name="name" th:value="${file.getName()}"/>
-                                        <div class="mb-3">
-                                            <label for="newName" class="form-label">New Name</label>
-                                            <input type="text" class="form-control" id="newName" name="newName" th:value="${file.getName()}"/>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Save changes</button>
-                                    </form>
-                                </div>
-                            </div>
+                                <button type="submit" class="btn btn-primary">Save changes</button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-        </tr>
-    </table>
+        </div>
+    </div>
 </div>
+
 <div th:fragment="newFileModal(path)">
     <div class="modal fade" id="newFileModal" tabindex="-1" aria-labelledby="newFileModalLabel" aria-hidden="true">
         <div class="modal-dialog">
