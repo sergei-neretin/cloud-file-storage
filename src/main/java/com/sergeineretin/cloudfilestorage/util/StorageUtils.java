@@ -1,26 +1,34 @@
 package com.sergeineretin.cloudfilestorage.util;
 
 import com.sergeineretin.cloudfilestorage.security.UserDetailsImpl;
+import lombok.experimental.UtilityClass;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.*;
 
+@UtilityClass
 public class StorageUtils {
-    private StorageUtils() {}
 
     public final static String USER_FILES_BUCKET_NAME="user-files";
 
     public static String getFullDirectoryPath(String path) {
-        long id = ((UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId();
-        String userRootFolder = "user-" + id + "-files/";
 
-        if (path == null || path.isBlank()) {
-            return userRootFolder;
-        } else if (!path.endsWith("/")) {
-            return userRootFolder + path + "/";
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl userDetails) {
+            long id = userDetails.getId();
+            String userRootFolder = "user-" + id + "-files/";
+
+            if (path == null || path.isBlank()) {
+                return userRootFolder;
+            } else if (!path.endsWith("/")) {
+                return userRootFolder + path + "/";
+            } else {
+                return userRootFolder + path;
+            }
         } else {
-            return userRootFolder + path;
+            throw new IllegalStateException("User is not authenticated or invalid principal type.");
         }
     }
 
