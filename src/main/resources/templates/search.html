@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="fragments/commons :: common-structure(~{::div.home-body})">
 <div class="home-body">
-    <h1>SEARCH PAGE</h1>
+    <div th:replace="fragments/commons :: header(path=${path})"></div>
     <tr th:each="file : ${files}">
         <div class="card">
             <div class="card-header">
@@ -15,8 +15,5 @@
             </div>
         </div>
     </tr>
-    <form th:action="@{/logout}" th:method="POST">
-        <input type="submit" value="Logout">
-    </form>
 </div>
 </html>
