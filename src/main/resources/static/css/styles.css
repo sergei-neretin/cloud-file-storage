@@ -1,0 +1,80 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.content {
+    flex: 1;
+}
+
+.navbar {
+    background-color: #343a40;
+    color: white;
+}
+.navbar-brand {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+.navbar-brand:hover {
+    color: #f8f9fa;
+}
+.nav-link {
+    color: #f8f9fa;
+}
+.nav-link:hover {
+    color: #ffc107;
+}
+.btn-logout {
+    background-color: #ffc107;
+    color: black;
+    border: none;
+    margin-left: 20px;
+}
+.btn-logout:hover {
+    background-color: #e0a800;
+}
+
+footer {
+    background-color: #212529;
+    color: white;
+    padding: 1rem 0;
+    margin-top: 1rem;
+}
+
+footer h5 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+footer p, footer ul {
+    font-size: 0.9rem;
+}
+
+footer ul li {
+    margin-bottom: 0.5rem;
+}
+
+footer .list-inline-item a {
+    color: #adb5bd;
+}
+
+footer .list-inline-item a:hover {
+    color: white;
+}
+
+footer .list-inline-item i {
+    font-size: 1.5rem;
+}
+
+.full-height {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
