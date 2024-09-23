@@ -1,32 +1,53 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="fragments/commons :: common-structure(~{::div.home-body})">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:replace="fragments/commons :: common-structure(~{::div.home-body})">
 <div class="home-body">
-<h1>HOME PAGE</h1>
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a th:href="@{/home}">Home</a>
-            </li>
-            <li class="breadcrumb-item" th:each="entry : ${hierarchy}">
-                <a th:href="@{home(path=${entry.value})}">
-                    <span th:text="${entry.getKey()}"></span>
-                </a>
-            </li>
-        </ol>
-    </nav>
-    <div class="btn-group" role="group" aria-label="Basic example">
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newFileModal">
-            New file
-        </button>
-        <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
-            New folder
-        </button>
+    <div sec:authorize="${hasRole('USER')}">
+
+        <div th:replace="fragments/commons :: header(path=${path})"></div>
+
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a th:href="@{/home}">Home</a>
+                </li>
+                <li class="breadcrumb-item" th:each="entry : ${hierarchy}">
+                    <a th:href="@{home(path=${entry.value})}">
+                        <span th:text="${entry.getKey()}"></span>
+                    </a>
+                </li>
+            </ol>
+        </nav>
+        <div class="d-flex justify-content-between align-items-center mb-4 ms-2 me-2">
+            <h4 class="mb-0">File Management</h4>
+            <div>
+                <button type="button" class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#newFileModal">
+                    <i class="bi bi-file-earmark-plus me-1"></i> New file
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#newFolderModal">
+                    <i class="bi bi-folder-plus me-1"></i> New folder
+                </button>
+            </div>
+        </div>
+
+
+        <div th:replace="fragments/home-fragments :: newFileModal(path=${path})"></div>
+        <div th:replace="fragments/home-fragments :: newFolderModal(path=${path})"></div>
+        <div th:replace="fragments/home-fragments :: homeFragment(${items}, ${path})"></div>
+
     </div>
-    <div th:replace="fragments/home-fragments :: newFileModal(path=${path})"></div>
-    <div th:replace="fragments/home-fragments :: newFolderModal(path=${path})"></div>
-    <div th:replace="fragments/home-fragments :: homeFragment(${items}, ${path})"></div>
-    <form th:action="@{/logout}" th:method="POST">
-        <input type="submit" value="Logout">
-    </form>
+    <nav sec:authorize="${isAnonymous()}" class="full-height d-flex flex-column align-items-center justify-content-center">
+        <header class="text-center my-5">
+            <h1>Welcome to CloudFileStorage</h1>
+            <p class="lead">Securely store, manage, and share your files from anywhere.</p>
+
+            <a th:href="@{/auth/registration}" class="btn btn-primary btn-lg me-3">
+                <i class="bi bi-person-plus-fill me-2"></i> Get Started
+            </a>
+
+            <a th:href="@{/auth/login}" class="btn btn-outline-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right me-2"></i> Login
+            </a>
+        </header>
+    </nav>
 </div>
 </html>
