@@ -1,13 +1,10 @@
 package com.sergeineretin.cloudfilestorage.controller;
 
 import com.sergeineretin.cloudfilestorage.dto.FileDownloadRequest;
-import com.sergeineretin.cloudfilestorage.exception.FileDownloadException;
-import com.sergeineretin.cloudfilestorage.exception.StorageException;
 import com.sergeineretin.cloudfilestorage.service.HomeService;
 import com.sergeineretin.cloudfilestorage.util.StorageUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -18,7 +15,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.ConstraintViolationException;
 import java.util.Optional;
 
 
@@ -103,26 +99,5 @@ public class HomeController {
 
     private String redirectToHomePage(String path) {
         return "redirect:/home?path=" + (path != null && !path.isEmpty() ? path : "");
-    }
-
-    @ExceptionHandler(StorageException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    private String handleStorageException(StorageException ex, Model model) {
-        model.addAttribute("message", ex.getMessage());
-        return "error";
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String handleViolationException(ConstraintViolationException ex, Model model) {
-        model.addAttribute("message", ex.getMessage());
-        return "error";
-    }
-
-    @ExceptionHandler(FileDownloadException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    public String handleFileDownloadException(FileDownloadException ex, Model model) {
-        model.addAttribute("message", ex.getMessage());
-        return "error";
     }
 }
