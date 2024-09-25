@@ -8,6 +8,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,7 +52,7 @@ public class HomeService {
         this.minioClient = minioClient;
     }
 
-    public void createFile(String path, @NotNull MultipartFile multipartFile) {
+    public void uploadFile(String path, @NotNull MultipartFile multipartFile) {
         try (InputStream inputStream = getInputStream(multipartFile)) {
             checkIfPathExists(path);
             if (isObjectExist(path + multipartFile.getOriginalFilename())) {
@@ -66,6 +67,21 @@ public class HomeService {
             log.info("File '{}' uploaded successfully", multipartFile.getOriginalFilename());
         } catch (Exception e) {
             throw new StorageException("Failed to store file '" + multipartFile.getOriginalFilename() + "'", e);
+        }
+    }
+
+    public ByteArrayResource downloadFile(String fullName) {
+        try(GetObjectResponse response =
+                minioClient.getObject(
+                        GetObjectArgs.builder()
+                                .bucket(USER_FILES_BUCKET_NAME)
+                                .object(fullName)
+                                .build()
+                )) {
+            return new ByteArrayResource(response.readAllBytes());
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new FileDownloadException(e.getMessage());
         }
     }
 
