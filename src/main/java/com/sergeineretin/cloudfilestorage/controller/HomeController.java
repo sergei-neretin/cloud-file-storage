@@ -23,6 +23,7 @@ import java.util.Optional;
 
 
 @Controller
+@RequestMapping("/home")
 public class HomeController {
     private final HomeService homeService;
 
@@ -31,7 +32,7 @@ public class HomeController {
         this.homeService = homeService;
     }
 
-    @GetMapping("/home")
+    @GetMapping
     public String homePage(@RequestParam(value = "path", required = false) Optional<String> optionalPath, Model model) {
         if(!isAuthenticated()) {
             return "home";
@@ -56,28 +57,28 @@ public class HomeController {
                 && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
-    @PostMapping("/home/new-file")
+    @PostMapping("/new-file")
     public String submit(@RequestParam(value = "path", required = false) String path,
                          @RequestParam("file") MultipartFile file) {
         homeService.uploadFile(StorageUtils.getFullDirectoryPath(path), file);
         return  redirectToHomePage(path);
     }
 
-    @PostMapping("/home/new-folder")
+    @PostMapping("/new-folder")
     public String newFolder(@RequestParam(value = "path", required = false) String path,
                             @RequestParam(value = "name") String name) {
         homeService.createFolder(StorageUtils.getFullDirectoryPath(path), name);
         return redirectToHomePage(path);
     }
 
-    @PostMapping("/home/delete")
+    @PostMapping("/delete")
     String deletePath(@RequestParam(value = "path") String path,
                                                      @RequestParam(value = "objectName") String name) {
         homeService.delete( StorageUtils.getFullDirectoryPath(path) + name);
         return redirectToHomePage(path);
     }
 
-    @PostMapping("/home/rename")
+    @PostMapping("/rename")
     String rename(@RequestParam(value = "path", required = false) String path,
                                                @RequestParam(value = "name") String name,
                                                @RequestParam(value = "newName") String newName) {
@@ -86,8 +87,7 @@ public class HomeController {
         return redirectToHomePage(path);
     }
 
-    @GetMapping(value = "/home/download",
-            produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/download", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<ByteArrayResource> download(@ModelAttribute("fileDownloadRequest") FileDownloadRequest fileDownloadRequest) {
         ByteArrayResource byteArrayResource = homeService.downloadFile(StorageUtils.getFullDirectoryPath( fileDownloadRequest.getPath()) + fileDownloadRequest.getName());
         return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/octet-stream"))
