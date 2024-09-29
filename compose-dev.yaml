@@ -7,11 +7,10 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-
+      MYSQL_DATABASE: mysql_db
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: sergei
+      MYSQL_PASSWORD: secret
   minio:
     image: 'minio/minio'
     ports:
@@ -21,13 +20,12 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_DEFAULT_BUCKETS=${MINIO_DEFAULT_BUCKETS}
+      - MINIO_ROOT_USER=username
+      - MINIO_ROOT_PASSWORD=password
+      - MINIO_DEFAULT_BUCKETS=your_bucket_name
     restart: always
     depends_on:
       - db
-
   redis:
     image: redis:latest
     restart: always
@@ -37,9 +35,6 @@ services:
     volumes:
       - ~/data/redis:/var/lib/redis
       - ~/data/redis/config:/usr/local/etc/redis/redis.conf
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-
 volumes:
   mysql_data:
   minio_data:
